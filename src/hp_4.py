@@ -72,9 +72,9 @@ def fees_report(infile, outfile):
     # Read the input CSV file
     with open(infile, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
-        for row in reader:
+        for row in reader:  # Each row is a dictionary
             date_returned = datetime.strptime(row['date_returned'], '%m/%d/%y')
-            date_due = datetime.strptime(row['date_due'], '%m/%d/%Y')
+            date_due = datetime.strptime(row['date_due'], '%m/%d/%y')  # Adjusted format
             late_days = max(0, (date_returned - date_due).days)
             late_fee = late_days * 0.25
             patron_id = row['patron_id']
@@ -86,20 +86,8 @@ def fees_report(infile, outfile):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for patron_id, late_fee in late_fees_per_patron.items():
-            # Ensure late_fee is formatted as floating point with 2 decimal places
+            # Ensure late_fee is formatted as a floating point with 2 decimal places
             writer.writerow({'patron_id': patron_id, 'late_fees': '{:.2f}'.format(late_fee)})
-
-
-    # Write the summary report to the output CSV file
-    with open(outfile, 'w', newline='') as csvfile:
-        fieldnames = ['patron_id', 'late_fees']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for patron_id, late_fee in late_fees_per_patron.items():
-            writer.writerow({'patron_id': patron_id, 'late_fees': '{:.2f}'.format(late_fee)})
-
-
-
 
 # The following main selection block will only run when you choose
 # "Run -> Module" in IDLE.  Use this section to run test code.  The
