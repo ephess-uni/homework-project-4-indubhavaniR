@@ -56,25 +56,16 @@ def add_date_range(values, start_date):
     return date_value_pairs
 
 def fees_report(infile, outfile):
-    """
-    Calculates late fees per patron id and writes a summary report to outfile.
-
-    Args:
-        infile (str): The input CSV file containing book return information.
-        outfile (str): The output CSV file to write the summary report.
-
-    Returns:
-        None
-    """
+    """Calculates late fees per patron id and writes a summary report to outfile."""
     # Dictionary to store late fees per patron
     late_fees_per_patron = defaultdict(float)
 
     # Read the input CSV file
     with open(infile, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
-        for row in reader:  # Each row is a dictionary
+        for row in reader:
             date_returned = datetime.strptime(row['date_returned'], '%m/%d/%y')
-            date_due = datetime.strptime(row['date_due'], '%m/%d/%y')  # Adjusted format
+            date_due = datetime.strptime(row['date_due'], '%m/%d/%Y')
             late_days = max(0, (date_returned - date_due).days)
             late_fee = late_days * 0.25
             patron_id = row['patron_id']
@@ -86,8 +77,8 @@ def fees_report(infile, outfile):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for patron_id, late_fee in late_fees_per_patron.items():
-            # Ensure late_fee is formatted as a floating point with 2 decimal places
             writer.writerow({'patron_id': patron_id, 'late_fees': '{:.2f}'.format(late_fee)})
+
 
 # The following main selection block will only run when you choose
 # "Run -> Module" in IDLE.  Use this section to run test code.  The
