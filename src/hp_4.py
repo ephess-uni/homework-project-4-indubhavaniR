@@ -1,8 +1,9 @@
 # hp_4.py
 #
-import csv
-from collections import defaultdict
 from datetime import datetime, timedelta
+from csv import DictReader, DictWriter
+from collections import defaultdict
+
 
 MONTHS = {
     1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr',
@@ -42,35 +43,43 @@ def add_date_range(values, start_date):
     return result
 
 
-def calculate_late_fee(due_date, return_date):
-    due_date = datetime.strptime(due_date, '%m/%d/%Y')
-    return_date = datetime.strptime(return_date, '%m/%d/%y')
-    days_late = max(0, (return_date - due_date).days)
-    return round(days_late * 0.25, 2)
-
-
 def fees_report(infile, outfile):
-    # Dictionary to store late fees for each patron_id
-    late_fees = defaultdict(float)
+    """Calculates late fees per patron id and writes a summary report to
+    outfile."""
 
-    # Read CSV file and calculate late fees
-    with open(infile, 'r') as file:
-        reader = csv.DictReader(file)
-        late_fees = defaultdict(float, {
-            row['patron_id']: late_fees[row['patron_id']] + calculate_late_fee(row['date_due'], row['date_returned'])
-            for row in reader
-        })
+    with open(infile) as file:
+        added_list = []
+        read_csv_obj = DictReader(file)
+        for record in read_csv_obj:
+            temp_dict = {}
+            late_fee_days = datetime.strptime(record['date_returned'], '%m/%d/%Y') - datetime.strptime(
+                record['date_due'], '%m/%d/%Y')
+            if (late_fee_days.days > 0):
+                temp_dict["patron_id"] = record['patron_id']
+                temp_dict["late_fees"] = round(late_fee_days.days * 0.25, 2)
+                added_list.append(temp_dict)
+            else:
+                temp_dict["patron_id"] = record['patron_id']
+                temp_dict["late_fees"] = float(0)
+                added_list.append(temp_dict)
 
-    # Write the summary report to the output file
-    with open(outfile, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['patron_id', 'late_fees'])
-        for patron_id, fee in late_fees.items():
-            writer.writerow([patron_id, "{:.2f}".format(fee)])
+        temp_dict_2 = {}
+        for dict in added_list:
+            key = (dict['patron_id'])
+            temp_dict_2[key] = temp_dict_2.get(key, 0) + dict['late_fees']
+        updated_list = [{'patron_id': key, 'late_fees': value} for key, value in temp_dict_2.items()]
 
+        for dict in updated_list:
+            for key, value in dict.items():
+                if key == "late_fees":
+                    if len(str(value).split('.')[-1]) != 2:
+                        dict[key] = str(value) + "0"
 
-# Example usage
-fees_report('book_returns.csv', 'late_fees_summary.csv')
+    with open(outfile, "w", newline="") as file:
+        col = ['patron_id', 'late_fees']
+        writer = DictWriter(file, fieldnames=col)
+        writer.writeheader()
+        writer.writerows(updated_list)
 
 # The following main selection block will only run when you choose
 # "Run -> Module" in IDLE.  Use this section to run test code.  The
